@@ -1,0 +1,10 @@
+Add new features and improvements to object-counter
+
+1. Added a new /predictions endpoint to return raw predictions with confidence scores
+2. Added MongoDB Atlas support for cloud database storage
+3. Created setup scripts for Unix/Linux/Mac and Windows
+4. Added Makefile for common tasks
+5. Improved documentation with detailed setup instructions
+6. Added comprehensive tests for all new features
+7. Added environment variable support for configuration
+8. Improved project structure and organization

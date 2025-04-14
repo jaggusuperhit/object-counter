@@ -12,13 +12,13 @@ The application is composed by 3 layers:
 
 - **domain**: This layer is responsible for the business logic. It is responsible for orchestrating the calls to the external services and for applying the business rules.
 
-The model used in this example has been taken from 
+The model used in this example has been taken from
 [IntelAI](https://github.com/IntelAI/models/blob/master/docs/object_detection/tensorflow_serving/Tutorial.md)
 
 
 ## Instructions to configure this project
 ```
-# Download the rfcn model 
+# Download the rfcn model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/rfcn_resnet101_fp32_coco_pretrained_model.tar.gz
 tar -xzvf rfcn_resnet101_fp32_coco_pretrained_model.tar.gz -C tmp
 rm rfcn_resnet101_fp32_coco_pretrained_model.tar.gz
@@ -67,51 +67,144 @@ docker run `
 ```
 
 
-## Run mongo 
+## Database Options
+
+### Option 1: Run local MongoDB
 
 ```bash
 docker rm -f test-mongo
 docker run --name test-mongo --rm -p 27017:27017 -d mongo:latest
 ```
 
+### Option 2: Use MongoDB Atlas
 
-## Setup virtualenv
+1. Create a MongoDB Atlas account at https://www.mongodb.com/cloud/atlas/register
+2. Create a new cluster (the free tier is sufficient)
+3. Create a database user with read/write permissions
+4. Add your IP address to the IP Access List
+5. Get your connection string from the Atlas dashboard
+6. Set the connection string as an environment variable:
 
+```bash
+# Unix
+export MONGO_CONNECTION_STRING="mongodb+srv://username:password@cluster.mongodb.net/"
+
+# Powershell
+$env:MONGO_CONNECTION_STRING="mongodb+srv://username:password@cluster.mongodb.net/"
+```
+
+
+## Setup
+
+### Option 1: Using setup scripts
+
+#### Unix/Linux/Mac
+```bash
+# Make the setup script executable
+chmod +x setup.sh
+
+# Run the setup script
+./setup.sh
+
+# Activate the virtual environment
+source .venv/bin/activate
+```
+
+#### Windows (PowerShell)
+```powershell
+# Run the setup script
+.\setup.ps1
+
+# Activate the virtual environment
+.venv\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Option 2: Using Makefile (Unix/Linux/Mac)
+```bash
+# Run the setup target
+make setup
+
+# Activate the virtual environment
+source .venv/bin/activate
+```
+
+### Option 3: Manual setup
 ```bash
 # Python >= 3.0
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
 ## Run the application
 
-### Using fakes
+### Option 1: Using Makefile
+
+```bash
+# Run with fake services (development mode)
+make run-dev
+
+# Run with local MongoDB and TensorFlow Serving
+make run-prod
+
+# Run with MongoDB Atlas and TensorFlow Serving
+make run-atlas
+```
+
+### Option 2: Using Python directly
+
+#### Using fakes
 ```
 python -m counter.entrypoints.webapp
 ```
 
-### Using real services in docker containers
+#### Using real services in docker containers
 
 ```
-# Unix
+# Unix - with local MongoDB
 ENV=prod python -m counter.entrypoints.webapp
 
-# Powershell
+# Powershell - with local MongoDB
 $env:ENV = "prod"
+python -m counter.entrypoints.webapp
+
+# Unix - with MongoDB Atlas
+ENV=atlas python -m counter.entrypoints.webapp
+
+# Powershell - with MongoDB Atlas
+$env:ENV = "atlas"
 python -m counter.entrypoints.webapp
 ```
 
 ## Call the service
 
+### Object Count Endpoint
+
 ```shell script
  curl -F "threshold=0.9" -F "file=@resources/images/boy.jpg" http://0.0.0.0:5000/object-count
  curl -F "threshold=0.9" -F "file=@resources/images/cat.jpg" http://0.0.0.0:5000/object-count
- curl -F "threshold=0.9" -F "file=@resources/images/food.jpg" http://0.0.0.0:5000/object-count 
+ curl -F "threshold=0.9" -F "file=@resources/images/food.jpg" http://0.0.0.0:5000/object-count
+```
+
+### Predictions Endpoint
+
+```shell script
+ curl -F "threshold=0.9" -F "file=@resources/images/boy.jpg" http://0.0.0.0:5000/predictions
+ curl -F "threshold=0.9" -F "file=@resources/images/cat.jpg" http://0.0.0.0:5000/predictions
+ curl -F "threshold=0.9" -F "file=@resources/images/food.jpg" http://0.0.0.0:5000/predictions
 ```
 
 ## Run the tests
 
+### Using pytest directly
 ```
 pytest
+```
+
+### Using Makefile
+```
+make test
 ```

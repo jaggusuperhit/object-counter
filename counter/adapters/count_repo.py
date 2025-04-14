@@ -1,4 +1,5 @@
 from typing import List
+import os
 
 from pymongo import MongoClient
 
@@ -36,6 +37,33 @@ class CountMongoDBRepo(ObjectCountRepo):
 
     def __get_counter_col(self):
         client = MongoClient(self.__host, self.__port)
+        db = client[self.__database]
+        counter_col = db.counter
+        return counter_col
+
+    def read_values(self, object_classes: List[str] = None) -> List[ObjectCount]:
+        counter_col = self.__get_counter_col()
+        query = {"object_class": {"$in": object_classes}} if object_classes else None
+        counters = counter_col.find(query)
+        object_counts = []
+        for counter in counters:
+            object_counts.append(ObjectCount(counter['object_class'], counter['count']))
+        return object_counts
+
+    def update_values(self, new_values: List[ObjectCount]):
+        counter_col = self.__get_counter_col()
+        for value in new_values:
+            counter_col.update_one({'object_class': value.object_class}, {'$inc': {'count': value.count}}, upsert=True)
+
+
+class CountMongoDBAtlasRepo(ObjectCountRepo):
+
+    def __init__(self, connection_string, database):
+        self.__connection_string = connection_string
+        self.__database = database
+
+    def __get_counter_col(self):
+        client = MongoClient(self.__connection_string)
         db = client[self.__database]
         counter_col = db.counter
         return counter_col
